@@ -32,10 +32,24 @@ export default function LeaderboardsPage() {
         const response = await fetch(`/api/leaderboard/get-top-players?type=${leaderboardType}&limit=100`)
         if (response.ok) {
           const data = await response.json()
-          setLeaderboard(data)
+          // Map API data to our interface and assign ranks
+          const rankedData = data.map((player: any, index: number) => ({
+            id: player.username,
+            username: player.username,
+            level: player.experience || 0,
+            points: player.points || 0,
+            referral_count: player.referral_count || 0,
+            is_verified: player.is_verified || false,
+            profile_picture_url: player.profile_picture_url || null,
+            rank: index + 1,
+          }))
+          setLeaderboard(rankedData)
+        } else {
+          setLeaderboard([])
         }
       } catch (error) {
         console.error("Error fetching leaderboard:", error)
+        setLeaderboard([])
       } finally {
         setLoading(false)
       }
@@ -120,8 +134,8 @@ export default function LeaderboardsPage() {
                               player.rank === 1
                                 ? "text-yellow-400"
                                 : player.rank === 2
-                                  ? "text-gray-300"
-                                  : "text-orange-400"
+                                ? "text-gray-300"
+                                : "text-orange-400"
                             }`}
                           >
                             {player.rank === 1 ? "🥇" : player.rank === 2 ? "🥈" : "🥉"}
@@ -134,7 +148,7 @@ export default function LeaderboardsPage() {
                       <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-indigo-600 to-purple-600 flex-shrink-0 flex items-center justify-center overflow-hidden border border-cyan-400/30">
                         {player.profile_picture_url ? (
                           <img
-                            src={player.profile_picture_url || "/placeholder.svg"}
+                            src={player.profile_picture_url}
                             alt={player.username}
                             className="w-full h-full object-cover"
                           />
@@ -168,7 +182,7 @@ export default function LeaderboardsPage() {
 
                     <div className="text-right flex-shrink-0">
                       <p className="text-base md:text-2xl font-bold text-green-400">
-                        {leaderboardType === "points" ? `${(player.points / 1000).toFixed(0)}k` : player.referral_count}
+                        {leaderboardType === "points" ? player.points : player.referral_count}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {leaderboardType === "points" ? "points" : "referrals"}
